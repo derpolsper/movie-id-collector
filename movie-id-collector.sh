@@ -8,6 +8,11 @@ validate_imdb_id() {
     input="$1"
     imdb_id=""
 
+    # First strip everything after and including ? if present
+    input=$(echo "$input" | sed 's/?.*//')
+    # Then remove trailing slash if present
+    input=$(echo "$input" | sed 's/\/$//')
+
     case "$input" in
         tt[0-9][0-9][0-9][0-9][0-9][0-9][0-9]|tt[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9])
             imdb_id="$input"
@@ -94,8 +99,26 @@ process_response() {
     json="$1"
 
     if ! echo "$json" | jq -e '.results.bindings[0]' >/dev/null; then
+        # Create minimal XML with just IMDB ID
+        imdb_id="$2"  # Pass IMDB ID as second parameter
         echo "Error: No results found for this IMDB ID" >&2
-        return 1
+        printf '%s\n' \
+            '<?xml version="1.0" encoding="UTF-8"?>' \
+            '<!DOCTYPE Tags SYSTEM "matroskatags.dtd">' \
+            '<Tags>' \
+            '    <Tag> <!-- Movie -->' \
+            '        <Targets>' \
+            '            <TargetTypeValue>50</TargetTypeValue>' \
+            '        </Targets>' \
+            '        <Simple>' \
+            '            <Name>IMDB</Name>' \
+            "            <String>$imdb_id</String>" \
+            '        </Simple>' \
+            '    </Tag>' \
+            '</Tags>' \
+            > "$imdb_id.xml"
+        echo "XML written to: $imdb_id.xml" >&2
+        return 0
     fi
 
     type_uri=$(echo "$json" | jq -r '.results.bindings[0].type.value')
@@ -319,7 +342,7 @@ main() {
     fi
 
     result=$(query_wikidata "$imdb_id")
-    process_response "$result"
+    process_response "$result" "$imdb_id"
 }
 
 # Check for required commands
