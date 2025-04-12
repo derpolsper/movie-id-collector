@@ -52,7 +52,7 @@ SELECT DISTINCT ?item ?type ?imdb ?academy ?allmovie ?bfi ?lc ?tcm ?tmdb ?tvdb ?
   OPTIONAL { ?item wdt:P11460 ?plex }       # Plex media key
 
   # Get labels and dates
-  OPTIONAL { 
+  OPTIONAL {
     ?item rdfs:label ?title.
     FILTER(LANG(?title) = \"en\")
   }
@@ -124,27 +124,27 @@ process_response() {
     type_uri=$(echo "$json" | jq -r '.results.bindings[0].type.value')
 
     case "$type_uri" in
-        *"Q11424"*)
+        *"Q11424"*|*"Q506240"*)
             process_movie_response "$json"
             ;;
         *"Q5398426"*)
-            echo "Error: This IMDB ID refers to a TV series. This script only processes movies." >&2
+            echo "Error: This IMDB ID refers to a TV series. This script only processes movies and TV movies." >&2
             echo "Hint: For TV series, you would need the IMDB ID of a specific movie, not a TV show." >&2
             return 1
             ;;
         *"Q3464665"*)
-            echo "Error: This IMDB ID refers to a TV season. This script only processes movies." >&2
+            echo "Error: This IMDB ID refers to a TV season. This script only processes movies and TV movies." >&2
             echo "Hint: For TV content, you would need the IMDB ID of a specific movie, not a TV season." >&2
             return 1
             ;;
         *"Q21191270"*)
-            echo "Error: This IMDB ID refers to a TV episode. This script only processes movies." >&2
+            echo "Error: This IMDB ID refers to a TV episode. This script only processes movies and TV movies." >&2
             echo "Hint: For TV content, you would need the IMDB ID of a specific movie, not a TV episode." >&2
             return 1
             ;;
         *)
-            echo "Error: This IMDB ID does not refer to a movie" >&2
-            echo "This script only processes movies. Please provide an IMDB ID for a movie." >&2
+            echo "Error: This IMDB ID does not refer to a movie or TV movie" >&2
+            echo "This script only processes movies and TV movies. Please provide an IMDB ID for a movie or TV movie." >&2
             return 1
             ;;
     esac
@@ -357,4 +357,4 @@ done
 case "$0" in
     */sh|*/bash) ;;
     *) main "$@" ;;
-esac 
+esac
